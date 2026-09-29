@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package pointatlas.segmentation.v1;
+
+// Return the instance at the prompted pixel, not every object of its class.
+service InstanceSegmentation {
+  rpc Segment(SegmentRequest) returns (SegmentResponse);
+}
+
+message SegmentRequest {
+  uint32 width = 1;
+  uint32 height = 2;
+  // Tightly packed sRGB RGB8, row-major, top-left origin, no row padding.
+  bytes rgb8 = 3;
+  // Pixel coordinates, origin top-left; integer (x,y) denotes pixel center.
+  uint32 x = 4;
+  uint32 y = 5;
+}
+
+message SegmentResponse {
+  // Exactly width*height bytes, values 0 or 1, same grid as input rgb8.
+  // If the model resizes/letterboxes input it MUST undo that here.
+  // No instance found: all-zero mask. Errors use gRPC status.
+  bytes mask = 1;
+}
