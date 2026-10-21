@@ -46,6 +46,18 @@ class Sam21Segmenter:
         return cls(predictor, device)
 
     def segment(self, image: np.ndarray, x: int, y: int) -> np.ndarray:
+        return self._segment(
+            image,
+            point_coords=np.asarray([[x, y]], dtype=np.float32),
+            point_labels=np.asarray([1], dtype=np.int32),
+        )
+
+    def segment_box(
+        self, image: np.ndarray, box: tuple[float, float, float, float]
+    ) -> np.ndarray:
+        return self._segment(image, box=np.asarray(box, dtype=np.float32))
+
+    def _segment(self, image: np.ndarray, **prompt: Any) -> np.ndarray:
         import torch
 
         autocast = (
@@ -53,14 +65,10 @@ class Sam21Segmenter:
             if self._device.startswith("cuda")
             else nullcontext()
         )
-        point = np.asarray([[x, y]], dtype=np.float32)
-        label = np.asarray([1], dtype=np.int32)
-
         with self._lock, torch.inference_mode(), autocast:
             self._predictor.set_image(image)
             masks, scores, _ = self._predictor.predict(
-                point_coords=point,
-                point_labels=label,
+                **prompt,
                 multimask_output=True,
             )
 
